@@ -1,21 +1,34 @@
 'use strict';
 
 const express = require('express');
-const socketIO = require('socket.io');
-const path = require('path');
+const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
 
-const PORT = process.env.PORT || 3000;
-const INDEX = path.join(__dirname, 'index.html');
-
-const server = express()
-  .use((req, res) => res.sendFile(INDEX) )
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
-
-const io = socketIO(server);
-
-io.on('connection', (socket) => {
-  console.log('Client connected');
-  socket.on('disconnect', () => console.log('Client disconnected'));
+// Activate the server to listen
+app.set('port', (process.env.PORT || 5000))
+// Set static directory to public
+.use(express.static(__dirname + '/public'))
+.listen(app.get('port'), function() {
+  console.log('Node app is running on port', app.get('port'));
 });
 
-setInterval(() => io.emit('time', new Date().toTimeString()), 1000);
+// views is directory for all template files
+app.set('views', __dirname + '/views');
+app.set('view engine', 'ejs');
+
+// Landing Page
+app.get('/', function(request, response) {
+    console.log("Received Request");
+  response.render('pages/index');
+});
+
+// WEB SOCKETS
+
+// Register a callback function run when a new connection connects
+io.on('connection', (socket) =>{
+    console.log('a user connected');
+    socket.on('disconnect', function(){
+      console.log('user disconnected');
+    });
+});
